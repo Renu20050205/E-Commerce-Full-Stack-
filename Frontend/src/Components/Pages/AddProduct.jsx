@@ -10,16 +10,15 @@ function AddProduct() {
   const token = localStorage.getItem("token");
 
   const [formData, setFormData] = useState({
-    productImage: null,
+    productImage: "",
     productName: "",
     category: "",
-    description: "",
-    price: "",
-    ratings: "",
+    productDescription: "",
+    productPrice: "",
+    productRatings: "",
     isFreeDelivery: false,
   });
 
-  // Agar login nahi hai toh redirect karo
   useEffect(() => {
     if (!token) {
       toast.error("Please login first to add a product!");
@@ -27,56 +26,47 @@ function AddProduct() {
     }
   }, [token, navigate]);
 
-  // Form field change handle karna
   const handleChange = (e) => {
-    const { name, value, type, checked, files } = e.target;
+    const { name, value, type, checked } = e.target;
 
-    if (type === "file") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: files[0],
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: type === "checkbox" ? checked : value,
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  // Form submit handle karna
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const productForm = new FormData();
-    productForm.append("productImage", formData.productImage);
-    productForm.append("productName", formData.productName);
-    productForm.append("category", formData.category);
-    productForm.append("description", formData.description);
-    productForm.append("price", formData.price);
-    productForm.append("ratings", formData.ratings);
-    productForm.append("isFreeDelivery", formData.isFreeDelivery ? "true" : "false");
+    const productData = {
+      productImage: formData.productImage.trim(),
+      productName: formData.productName.trim(),
+      category: formData.category.toLowerCase(),
+      productDescription: formData.productDescription.trim(),
+      productPrice: Number(formData.productPrice),
+      productRatings: Number(formData.productRatings),
+      isFreeDelivery: formData.isFreeDelivery,
+    };
 
     try {
-      await addProduct(productForm, token);
+      await addProduct(productData, token);
       toast.success("✅ Product Added Successfully!");
 
-      // Reset form
       setFormData({
-        productImage: null,
+        productImage: "",
         productName: "",
         category: "",
-        description: "",
-        price: "",
-        ratings: "",
+        productDescription: "",
+        productPrice: "",
+        productRatings: "",
         isFreeDelivery: false,
       });
 
-      // Redirect thoda delay ke sath taki toast dikhe
       setTimeout(() => {
         navigate("/");
       }, 1500);
     } catch (error) {
+      console.log("Server Error:", error.response?.data);
       toast.error(error.response?.data?.msg || "❌ Product Add Failed");
     }
   };
@@ -85,13 +75,12 @@ function AddProduct() {
     <div className="add-product-container">
       <h2>Add Product</h2>
       <form onSubmit={handleSubmit} className="product-form">
-        
-        <label>Product Image:</label>
+        <label>Product Image URL:</label>
         <input
-          key={formData.productImage ? formData.productImage.name : "file"} // reset trick
-          type="file"
+          type="text"
           name="productImage"
-          accept="image/*"
+          placeholder="Enter image URL"
+          value={formData.productImage}
           onChange={handleChange}
           required
         />
@@ -114,18 +103,18 @@ function AddProduct() {
           required
         >
           <option value="">Select Category</option>
-          <option value="Electronics">Electronics</option>
-          <option value="Furniture">Furniture</option>
-          <option value="Clothes">Clothes</option>
-          <option value="Food">Food</option>
-          <option value="Books">Books</option>
+          <option value="clothes">Clothes</option>
+          <option value="food">Food</option>
+          <option value="toy">Toy</option>
+          <option value="electronic">Electronic</option>
+          <option value="books">Books</option>
         </select>
 
         <label>Product Description:</label>
         <textarea
-          name="description"
+          name="productDescription"
           placeholder="Enter product description"
-          value={formData.description}
+          value={formData.productDescription}
           onChange={handleChange}
           required
         />
@@ -133,9 +122,9 @@ function AddProduct() {
         <label>Product Price (₹):</label>
         <input
           type="number"
-          name="price"
+          name="productPrice"
           placeholder="Enter price"
-          value={formData.price}
+          value={formData.productPrice}
           onChange={handleChange}
           required
         />
@@ -143,10 +132,10 @@ function AddProduct() {
         <label>Product Rating (1 to 5):</label>
         <input
           type="number"
-          name="ratings"
+          name="productRatings"
           min="1"
           max="5"
-          value={formData.ratings}
+          value={formData.productRatings}
           onChange={handleChange}
           required
         />

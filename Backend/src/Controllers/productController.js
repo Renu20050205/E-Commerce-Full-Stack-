@@ -43,10 +43,10 @@ const addProducts = async (req, res) => {
 
     let validCategory = [
       "electronic",
-      "clothing",
+      "clothes", //
       "food",
       "books",
-      "furniture",
+      "toy",
     ];
 
     if (!validCategory.includes(category.trim().toLowerCase())) {
@@ -228,21 +228,15 @@ const updateProduct = async (req, res) => {
       if (!isValid(productImage) || !isValidURL(productImage)) {
         return res.status(400).json({ msg: "Valid Product Image is Required" });
       }
-      updateData.productImage = productImage;
+      updateData.productImage = productImage.trim();
     }
 
-    // Product Name Validtion
+    // Product Name Validation
     if (productName) {
       if (!isValid(productName)) {
         return res.status(400).json({ msg: "Product Name is required" });
       }
-
-      const duplicateProduct = await productModel.findOne({ productName });
-      if (duplicateProduct) {
-        return res.status(409).json({ msg: "Product Name already exists" });
-      }
-
-      updateData.productName = productName;
+      updateData.productName = productName.trim();
     }
 
     // Category Validation
@@ -252,16 +246,19 @@ const updateProduct = async (req, res) => {
       }
 
       const validCategories = [
-        "electronics",
+        "electronic",
         "clothing",
         "food",
         "books",
         "furniture",
       ];
-      if (!validCategories.includes(category.trim().toLowerCase())) {
+
+      const formattedCategory = category.trim().toLowerCase();
+      if (!validCategories.includes(formattedCategory)) {
         return res.status(400).json({ msg: "Invalid Category" });
       }
-      updateData.category = validCategories;
+
+      updateData.category = formattedCategory;
     }
 
     // Description Validation
@@ -269,22 +266,25 @@ const updateProduct = async (req, res) => {
       if (!isValid(productDescription)) {
         return res.status(400).json({ msg: "Description is required" });
       }
-      updateData.productDescription = productDescription;
+      updateData.productDescription = productDescription.trim();
     }
 
     // Price Validation
-    if (productPrice) {
-      if (!isValid(productPrice) || productPrice < 0) {
+    if (typeof productPrice !== "undefined") {
+      const priceNum = Number(productPrice);
+      if (!isValid(priceNum) || priceNum < 0) {
         return res.status(400).json({ msg: "Valid Price is Required" });
       }
       updateData.productPrice = priceNum;
     }
 
-    // Ratings
-    if (productRatings) {
-      if (!isValid(productRatings) || productRatings < 0 || productRatings > 5) {
+    // Ratings Validation
+    if (typeof productRatings !== "undefined") {
+      const ratingNum = Number(productRatings);
+      if (!isValid(ratingNum) || ratingNum < 0 || ratingNum > 5) {
         return res.status(400).json({ msg: "Valid Ratings is Required" });
       }
+      updateData.productRatings = ratingNum;
     }
 
     // isFreeDelivery Validation
@@ -305,7 +305,7 @@ const updateProduct = async (req, res) => {
       .status(200)
       .json({ msg: "Product Updated Successfully", update });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({ msg: "Internal Server Error", error });
   }
 };

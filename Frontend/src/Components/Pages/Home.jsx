@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { getAllProducts } from "../services/productService";
+import { getAllProducts, deleteProduct } from "../services/productService";
+import { addToCart } from "../services/cartService";
 import { useNavigate } from "react-router-dom";
-import { addProduct} from "../services/productService";
-import { deleteProduct } from "../services/productService";
-import "./Home.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "./Home.css";
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -29,9 +28,10 @@ const Home = () => {
       });
       setQuantities(initialQuantities);
 
-      setLoading(false);
+
     } catch (error) {
       console.log("Error fetching products:", error);
+    } finally {
       setLoading(false);
     }
   };
@@ -45,6 +45,7 @@ const Home = () => {
   const handleAddToCart = async (productId) => {
     const quantity = quantities[productId] || 1;
     try {
+      // Make sure addToCart is imported from services
       const res = await addToCart({ productId, quantity });
       toast.success(res.data.msg);
     } catch (error) {
@@ -53,8 +54,12 @@ const Home = () => {
   };
 
   const handleDeleteProduct = async (productId) => {
+    if (!token) {
+      toast.error("Please login to delete a product.");
+      return;
+    }
     try {
-      const res = await deleteProduct(productId);
+      const res = await deleteProduct(productId, token);
       toast.success(res.data.msg);
       fetchProducts();
     } catch (error) {
@@ -75,8 +80,8 @@ const Home = () => {
           />
           <h3>{product.productName}</h3>
           <p>Category: {product.category}</p>
-          <p>Price: ₹{product.price}</p>
-          <p>Rating: ⭐ {product.ratings}</p>
+          <p>Price: ₹{product.productPrice}</p>
+          <p>Rating: ⭐ {product.productRatings}</p>
           {product.isFreeDelivery && (
             <p style={{ color: "green", fontWeight: "bold" }}>Free Delivery</p>
           )}
